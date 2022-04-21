@@ -236,6 +236,12 @@ impl NodeGraph {
 		return id;
 	}
 
+	pub fn add_node_by_recipe(&mut self, name: String, recipe_name: String) -> NodeId {
+		let behavior = get_node_by_recipe(recipe_name);
+
+		self.add_node(name, behavior)
+	}
+
 	pub fn remove_node(&mut self, node_id: NodeId){
 		if let Some(heaped_node) = self.map.remove(&node_id){
 			unsafe {
@@ -376,6 +382,40 @@ impl NodeGraph {
 
 		return result;
 	}
+}
 
+type NodeRecipeFn = dyn FnMut() -> Box<dyn NodeBehavior>; 
 
+static mut NODE_COOKBOOK: Option<HashMap<String, Box<NodeRecipeFn>>> = None;
+
+pub fn register_node_recipe(name: String, recipe: Box<NodeRecipeFn>){
+	unsafe {
+		if NODE_COOKBOOK.is_none() {
+			NODE_COOKBOOK = Some(HashMap::new());
+		}
+
+		if let Some(cookbook) = &mut NODE_COOKBOOK {
+			if cookbook.contains_key(&name) {
+				panic!("Trying to register a node recipe that already exists! Recipe was {}", name);
+			} else {
+				cookbook.insert(name, recipe);
+			}
+		}
+	}
+}
+
+pub fn get_node_by_recipe(name: String) -> Box<dyn NodeBehavior> {
+	unsafe {
+		if let Some(cookbook) = &mut NODE_COOKBOOK {
+			let mut maybe_recipe = cookbook.get_mut(&name);
+
+			if let Some(recipe_fn) = &mut maybe_recipe {
+				return recipe_fn()
+			} else {
+				panic!("Couldn't find a node recipe with the following name: {}", name);
+			}
+		} else {
+			panic!("Node cookbook has not been initialized!")
+		}
+	}
 }

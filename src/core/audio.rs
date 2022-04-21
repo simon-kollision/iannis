@@ -1,7 +1,6 @@
 extern crate cpal;
 use cpal::traits::{DeviceTrait, HostTrait};
 use crate::core::node::BUFFER_SIZE;
-use std::thread;
 
 extern crate ringbuf;
 
