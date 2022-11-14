@@ -26,21 +26,21 @@ pub struct AddNodeMessage {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct RemoveNodeMessage {
-	node_id: String
+	node_id: usize
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct ConnectNodesMessage {
-	from_id: String,
-	to_id: String,
+	from_id: usize,
+	to_id: usize,
 	output_idx: usize,
 	input_idx: usize
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct DisconnectNodesMessage {
-	from_id: String,
-	to_id: String,
+	from_id: usize,
+	to_id: usize,
 	output_idx: usize,
 	input_idx: usize
 }

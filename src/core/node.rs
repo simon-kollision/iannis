@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::collections::VecDeque;
 use crate::core::heaped::Heaped;
 
-pub const BUFFER_SIZE: usize = 64;
+pub const BUFFER_SIZE: usize = 256;
 
 #[derive(PartialEq, Eq, Hash, Copy, Clone, Debug)]
 pub struct NodeId(usize);
@@ -96,16 +96,17 @@ impl Node {
 		}
 
 		Node { 
-			name: name, 
-			id: id,
+			name, 
+			id,
 
-			ins: ins, 
-			outs: outs,
+			ins, 
+			outs,
+			
+			behavior,
 
 			edges_in: Vec::new(),
 			edges_out: Vec::new(),
 
-			behavior: behavior,
 			behavior_info: info
 		}
 	}
@@ -220,13 +221,13 @@ impl NodeGraph {
 		}
 	}
 
-	pub fn add_node(&mut self, name: String, behavior: Box<dyn NodeBehavior>) -> NodeId {
+	pub fn add_node(&mut self, name: &str, behavior: Box<dyn NodeBehavior>) -> NodeId {
 		println!("Adding node '{}'", name);
 
 		self.prev_node_id_val += 1;
 		let id = NodeId(self.prev_node_id_val);
 
-		let node = Heaped::new_with_value(Node::new(name, id, behavior));
+		let node = Heaped::new_with_value(Node::new(name.to_string(), id, behavior));
 
 		self.nodes.push(node);
 		self.map.insert(id, node);
@@ -236,7 +237,7 @@ impl NodeGraph {
 		return id;
 	}
 
-	pub fn add_node_by_recipe(&mut self, name: String, recipe_name: String) -> NodeId {
+	pub fn add_node_by_recipe(&mut self, name: &str, recipe_name: &str) -> NodeId {
 		let behavior = get_node_by_recipe(recipe_name);
 
 		self.add_node(name, behavior)
@@ -388,26 +389,26 @@ type NodeRecipeFn = dyn FnMut() -> Box<dyn NodeBehavior>;
 
 static mut NODE_COOKBOOK: Option<HashMap<String, Box<NodeRecipeFn>>> = None;
 
-pub fn register_node_recipe(name: String, recipe: Box<NodeRecipeFn>){
+pub fn register_node_recipe(name: &str, recipe: Box<NodeRecipeFn>){
 	unsafe {
 		if NODE_COOKBOOK.is_none() {
 			NODE_COOKBOOK = Some(HashMap::new());
 		}
 
 		if let Some(cookbook) = &mut NODE_COOKBOOK {
-			if cookbook.contains_key(&name) {
+			if cookbook.contains_key(&name.to_string()) {
 				panic!("Trying to register a node recipe that already exists! Recipe was {}", name);
 			} else {
-				cookbook.insert(name, recipe);
+				cookbook.insert(name.to_string(), recipe);
 			}
 		}
 	}
 }
 
-pub fn get_node_by_recipe(name: String) -> Box<dyn NodeBehavior> {
+pub fn get_node_by_recipe(name: &str) -> Box<dyn NodeBehavior> {
 	unsafe {
 		if let Some(cookbook) = &mut NODE_COOKBOOK {
-			let mut maybe_recipe = cookbook.get_mut(&name);
+			let mut maybe_recipe = cookbook.get_mut(&name.to_string());
 
 			if let Some(recipe_fn) = &mut maybe_recipe {
 				return recipe_fn()

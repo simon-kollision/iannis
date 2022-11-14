@@ -13,7 +13,7 @@ use crate::core::heaped::Heaped;
 use crate::behavior::waveform::*;
 use crate::behavior::basic::*;
 use crate::websocket::message::*;
-use crate::websocket::server::{Server};
+use crate::websocket::server::Server;
 
 use std::sync::mpsc::channel;
 
@@ -29,7 +29,7 @@ fn run_dot(dot_path: &str, png_path: &str){
 }
 
 fn main() {
-	let ringbuf_buffer_size = (BUFFER_SIZE*32).try_into().expect("Ringbuf BUFFER_SIZE cannot fit into usize!");
+	let ringbuf_buffer_size = (BUFFER_SIZE*32).try_into().expect("Ringbuf BUFFER_SIZE*32 cannot fit into usize!");
 
 	let mut ringbuf = ringbuf::RingBuffer::<f32>::new(ringbuf_buffer_size);
 	let (mut ringbuf_prod, mut ringbuf_cons) = ringbuf.split();
@@ -42,31 +42,31 @@ fn main() {
 	let graph_thread = thread::spawn(move || {
 		let mut graph = NodeGraph::new();
 
-		let sin_freq = graph.add_node(String::from("sin_freq"), Box::new(WaveformNode::new(vec![120.0])));
-		let sin = graph.add_node(String::from("sin"), Box::new(SinNode::new()));
+		let sin_freq = graph.add_node("sin_freq", Box::new(WaveformNode::new(vec![120.0])));
+		let sin = graph.add_node("sin", Box::new(SinNode::new()));
 
-		let sin_scale_amt = graph.add_node(String::from("sin_scale_amt"), Box::new(WaveformNode::new(vec![0.1])));
-		let sin_scale = graph.add_node(String::from("sin_scale"), Box::new(ProductNode::new(2)));
+		let sin_scale_amt = graph.add_node("sin_scale_amt", Box::new(WaveformNode::new(vec![0.1])));
+		let sin_scale = graph.add_node("sin_scale", Box::new(ProductNode::new(2)));
 
-		let sin_offset_amt = graph.add_node(String::from("sin_offset_amt"), Box::new(WaveformNode::new(vec![1.0])));
-		let sin_offset = graph.add_node(String::from("sin_offset"), Box::new(SumNode::new(2)));
+		let sin_offset_amt = graph.add_node("sin_offset_amt", Box::new(WaveformNode::new(vec![1.0])));
+		let sin_offset = graph.add_node("sin_offset", Box::new(SumNode::new(2)));
 
-		let sin_2_freq = graph.add_node(String::from("sin_2_freq"), Box::new(WaveformNode::new(vec![400.0])));
-		let sin_2_freq_mod = graph.add_node(String::from("sin_2_freq_mod"), Box::new(ProductNode::new(2)));
+		let sin_2_freq = graph.add_node("sin_2_freq", Box::new(WaveformNode::new(vec![400.0])));
+		let sin_2_freq_mod = graph.add_node("sin_2_freq_mod", Box::new(ProductNode::new(2)));
 
-		let sin_2 = graph.add_node(String::from("sin2"), Box::new(SinNode::new()));
+		let sin_2 = graph.add_node("sin2", Box::new(SinNode::new()));
 
-		let left_amp_mod_freq = graph.add_node(String::from("left_amp_mod_freq"), Box::new(WaveformNode::new(vec![0.87])));
-		let left_amp_mod = graph.add_node(String::from("left_amp_mod"), Box::new(SinNode::new()));
+		let left_amp_mod_freq = graph.add_node("left_amp_mod_freq", Box::new(WaveformNode::new(vec![0.87])));
+		let left_amp_mod = graph.add_node("left_amp_mod", Box::new(SinNode::new()));
 
-		let right_amp_mod_freq = graph.add_node(String::from("right_amp_mod_freq"), Box::new(WaveformNode::new(vec![1.73])));
-		let right_amp_mod = graph.add_node(String::from("right_amp_mod"), Box::new(SinNode::new()));
+		let right_amp_mod_freq = graph.add_node("right_amp_mod_freq", Box::new(WaveformNode::new(vec![1.73])));
+		let right_amp_mod = graph.add_node("right_amp_mod", Box::new(SinNode::new()));
 
-		let left_amp = graph.add_node(String::from("left_amp"), Box::new(ProductNode::new(2)));
-		let right_amp = graph.add_node(String::from("right_amp"), Box::new(ProductNode::new(2)));
+		let left_amp = graph.add_node("left_amp", Box::new(ProductNode::new(2)));
+		let right_amp = graph.add_node("right_amp", Box::new(ProductNode::new(2)));
 
 		let output_buffer: Heaped<Vec<f32>> = Heaped::new_with_value(vec![0.0; BUFFER_SIZE*2]);
-		let output = graph.add_node(String::from("output"), Box::new(InterleavingOutputNode::new(output_buffer)));
+		let output = graph.add_node("output", Box::new(InterleavingOutputNode::new(output_buffer)));
 
 		graph.connect(sin_freq, 0, sin, 0);
 		graph.connect(sin, 0, sin_scale, 0);
@@ -97,13 +97,14 @@ fn main() {
 		loop {
 			let remaining = ringbuf_prod.remaining();
 			if remaining > BUFFER_SIZE {
-
 				graph.update();
 
 				unsafe {
 					ringbuf_prod.push_slice(&(*output_buffer.const_ptr));
 				}
+				println!(".");
 			} else {
+				println!("parking");
 				thread::park();
 			}
 		}
@@ -111,7 +112,7 @@ fn main() {
 
 	audio_manager.open_output_stream(ringbuf_cons, graph_thread.thread().clone());
 
-	let mut websocket_server = Server::new();
+	let mut websocket_server: Server = Server::new();
 	websocket_server.run(9001, ws_out_tx, ws_in_rx);
 
 	loop {

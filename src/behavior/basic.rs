@@ -107,7 +107,5 @@ impl NodeBehavior for InterleavingOutputNode {
 				(*self.heaped_out_buffer.mut_ptr)[i*2 + 1] = right.buffer[i];
 			}
 		}
-
-		//self.ringbuf_producer.push_slice(&self.tmp_buffer[0..]);
 	}
 }
