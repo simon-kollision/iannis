@@ -8,6 +8,7 @@ mod core;
 mod behavior;
 mod websocket;
 use crate::core::node::*;
+use crate::core::node_graph::*;
 use crate::core::audio::*;
 use crate::core::heaped::Heaped;
 use crate::behavior::waveform::*;
@@ -42,24 +43,24 @@ fn main() {
 	let graph_thread = thread::spawn(move || {
 		let mut graph = NodeGraph::new();
 
-		let sin_freq = graph.add_node("sin_freq", Box::new(WaveformNode::new(vec![120.0])));
+		let sin_freq = graph.add_node("sin_freq", Box::new(WaveformNode::new(vec![250.0])));
 		let sin = graph.add_node("sin", Box::new(SinNode::new()));
 
-		let sin_scale_amt = graph.add_node("sin_scale_amt", Box::new(WaveformNode::new(vec![0.1])));
+		let sin_scale_amt = graph.add_node("sin_scale_amt", Box::new(WaveformNode::new(vec![0.5])));
 		let sin_scale = graph.add_node("sin_scale", Box::new(ProductNode::new(2)));
 
 		let sin_offset_amt = graph.add_node("sin_offset_amt", Box::new(WaveformNode::new(vec![1.0])));
 		let sin_offset = graph.add_node("sin_offset", Box::new(SumNode::new(2)));
 
-		let sin_2_freq = graph.add_node("sin_2_freq", Box::new(WaveformNode::new(vec![400.0])));
+		let sin_2_freq = graph.add_node("sin_2_freq", Box::new(WaveformNode::new(vec![300.0])));
 		let sin_2_freq_mod = graph.add_node("sin_2_freq_mod", Box::new(ProductNode::new(2)));
 
 		let sin_2 = graph.add_node("sin2", Box::new(SinNode::new()));
 
-		let left_amp_mod_freq = graph.add_node("left_amp_mod_freq", Box::new(WaveformNode::new(vec![0.87])));
+		let left_amp_mod_freq = graph.add_node("left_amp_mod_freq", Box::new(WaveformNode::new(vec![0.21323])));
 		let left_amp_mod = graph.add_node("left_amp_mod", Box::new(SinNode::new()));
 
-		let right_amp_mod_freq = graph.add_node("right_amp_mod_freq", Box::new(WaveformNode::new(vec![1.73])));
+		let right_amp_mod_freq = graph.add_node("right_amp_mod_freq", Box::new(WaveformNode::new(vec![0.372819])));
 		let right_amp_mod = graph.add_node("right_amp_mod", Box::new(SinNode::new()));
 
 		let left_amp = graph.add_node("left_amp", Box::new(ProductNode::new(2)));
@@ -102,9 +103,9 @@ fn main() {
 				unsafe {
 					ringbuf_prod.push_slice(&(*output_buffer.const_ptr));
 				}
-				println!(".");
+				//println!(".");
 			} else {
-				println!("parking");
+				//println!("parking");
 				thread::park();
 			}
 		}
